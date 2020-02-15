@@ -17,31 +17,35 @@
       $this->load->model('category');
     }
 
-    public function category_get($slug = NULL)
+    public function categories_get($id = NULL)
     {
-      if ($slug) {
-          $category = $this->category->get_single($slug);
+      if ($id) {
+          $category = $this->category->get_single($id);
           if ($category) {
             $this->response($category, REST_Controller::HTTP_OK);
           }
-      }
-    }
-
-    public function list_get()
-    {
-      $categories = $this->category->get_list();
-      if ($categories) {
-        $this->response($categories, REST_Controller::HTTP_OK);
+          else {
+            $this->response([
+              'status' => FALSE,
+              'message' => 'No category were found.'
+          ], REST_Controller::HTTP_NOT_FOUND);
+          }
       }
       else {
-        $this->response([
-            'status' => FALSE,
-            'message' => 'No artists were found.'
-        ], REST_Controller::HTTP_NOT_FOUND);
+        $categories = $this->category->get_list();
+        if ($categories) {
+          $this->response($categories, REST_Controller::HTTP_OK);
+        }
+        else {
+          $this->response([
+              'status' => FALSE,
+              'message' => 'No category were found.'
+          ], REST_Controller::HTTP_NOT_FOUND);
+        }
       }
     }
 
-    public function create_post()
+    public function categories_post()
     {
       
 			$this->load->library ('form_validation');
@@ -82,7 +86,7 @@
     }
 
 
-    public function edit_post($id = NULL)
+    public function categories_put($id = NULL)
     {
       if($id) {
         $this->load->library ('form_validation');
@@ -90,22 +94,15 @@
         $this->category->load($id);
 
         if($this->category->is_found) {
-          $name = trim($this->db->escape(xss_clean($this->input->post('name'))), '\'');
-          $is_unique = '';
-          if ($this->category->name != $name) {
-            $is_unique = '|is_unique[categories.name]';
-          }
+          parse_str(file_get_contents("php://input"),$put_vars);
 
-          $this->form_validation->set_rules('name', 'name', 'required|trim'.$is_unique);
+          if(isset($put_vars['name'])) {
+            $name = trim($this->db->escape(xss_clean($put_vars['name'])), '\'');
+            $is_unique = '';
+            if ($this->category->name != $name) {
+              $is_unique = '|is_unique[categories.name]';
+            }
 
-          if ($this->form_validation->run () ==  false) {
-            $this->response([
-              'status' => FALSE,
-              'message' => 'There is some error please try again later.',
-              'errors' => validation_errors()
-            ], REST_Controller::HTTP_BAD_REQUEST);
-          }
-          else {
             $this->category->name = $name;
             $this->category->save();
             
@@ -115,6 +112,13 @@
               'category' => $this->category->get_single($this->category->id)
             ], REST_Controller::HTTP_OK);
           }
+          else {
+            $this->response([
+              'status' => FALSE,
+              'message' => 'There is some error please try again later.',
+              'errors' => 'category name missing'
+            ], REST_Controller::HTTP_BAD_REQUEST);
+          }
         }
         else {
           $this->response([
@@ -122,11 +126,12 @@
             'message' => 'There is some error please try again later.',
           ], REST_Controller::HTTP_BAD_REQUEST);
         }
-
-        
       }
       else {
-
+        $this->response([
+          'status' => FALSE,
+          'message' => 'There is some error please try again later.',
+        ], REST_Controller::HTTP_BAD_REQUEST);
       }
     }
   }

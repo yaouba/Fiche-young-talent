@@ -53,4 +53,11 @@ $route['default_controller'] = 'welcome';
 $route['404_override'] = '';
 $route['translate_uri_dashes'] = FALSE;
 
-$route['api/users'] = 'api/users/index';
+
+$route['api/artists/(:any)'] = 'api/artists/artists/$1';
+$route['api/artists'] = 'api/artists/artists';
+$route['api/categories/(:any)'] = 'api/categories/categories/$1';
+
+$route['api/categories'] = 'api/categories/categories';
+
+
